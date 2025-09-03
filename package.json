@@ -30,6 +30,7 @@
 		"feedlanddatabase": "^0.7.52",
 		"feedhunter": "^0.4.4",
 		"opml": "^0.5.1",
-		"wpidentity": "^0.4.14"
+		"wpidentity": "^0.5.25",
+		"sqllog": "*"
 		} 
 	}

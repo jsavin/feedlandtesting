@@ -1,3 +1,25 @@
+#### 9/3/25; 10:45:05 AM by DW
+
+Commented out the debugging code that dumped sqltext in getRiver. Sometimes the sqltext is very long, 
+
+#### 8/22/25; 11:47:15 AM by DW
+
+Added a metadata column to the items table.
+
+We're passing through the siteId and postId for posts from WordPress feeds. 
+
+Rather than creating columns for these values, which are pass-through for feedlandDatabase, we're going to put them in metadata.
+
+Here are the places we need to make changes.
+
+* checkOneItem, saveItem
+
+* convertDatabaseItem
+
+Change to make to existing databases.
+
+* alter table items add column metadata json not null default (json_object());
+
 #### 6/6/25; 11:41:22 AM by DW
 
 When checking items for changes, we weren't checking outlineJsontext.

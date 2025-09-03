@@ -1,4 +1,4 @@
-var myProductName = "feedlandDatabase", myVersion = "0.8.1";  
+var myProductName = "feedlandDatabase", myVersion = "0.8.2";  
 
 exports.start = start;
 exports.addSubscription = addSubscription;
@@ -279,11 +279,9 @@ function dateDaysBefore (ctDays, d) { //2/7/24 by DW
 	const thePastDate = new Date (d - (ctDays * 24 * 60 * 60 * 1000));
 	return (thePastDate);
 	}
-
 function addMacroToPagetable (pagetable) { //12/1/23 by DW
 	pagetable.feedlandDatabaseVersion = myVersion; //allows it to appear in About dialog in feedlandHome.
 	}
-
 function httpReadUrl (url, callback) { //8/21/22 by DW
 	request (url, function (err, response, data) {
 		if (err) {
@@ -638,6 +636,32 @@ function deleteItem (id, callback) { //4/22/22 by DW
 	callback ({message}); //12/16/23 by DW
 	return;
 	}
+function objectsEqual (a, b) { //8/22/25 by DW
+	const aKeys = Object.keys (a);
+	const bKeys = Object.keys (b);
+	if (aKeys.length !== bKeys.length) {
+		return (false);
+		}
+	else {
+		for (var i = 0; i < aKeys.length; i++) {
+			const key = aKeys [i];
+			if (a [key] !== b [key]) {
+				return (false);
+				}
+			}
+		return (true);
+		}
+	}
+function jsonObjectsEqual (json1, json2) {
+	try {
+		const obj1 = JSON.parse (json1);
+		const obj2 = JSON.parse (json2);
+		return (objectsEqual (obj1, obj2));
+		}
+	catch (err) {
+		return (false);
+		}
+	}
 
 
 function saveFeed (feedRec, callback) {
@@ -704,7 +728,8 @@ function convertDatabaseItem (itemRec) { //convert database item to the item str
 		pubDate: convertDate (itemRec.pubDate),
 		whenReceived: convertDate (itemRec.whenCreated), //when the database item was created
 		whenUpdated: convertDate (itemRec.whenUpdated), //when the database item last changed
-		likes: convertLikesToArray (itemRec.likes) //10/15/22 by DW
+		likes: convertLikesToArray (itemRec.likes), //10/15/22 by DW
+		metadata: JSON.parse (itemRec.metadata), //8/22/25 by DW
 		}
 	apiRec.ctLikes = apiRec.likes.length; //10/15/22 by DW
 	if (notNull (itemRec.enclosureUrl)) {
@@ -1187,9 +1212,10 @@ function logNewitem (itemRec) { //5/23/22 by DW
 	var textstring = (itemRec.title === undefined) ? utils.maxStringLength (utils.stripMarkup (itemRec.description), 50) : itemRec.title;
 	console.log (nowstring + ": " + textstring);
 	}
-function checkFeedItems (feedRec, itemsArray, flNewFeed, callback) {
+function checkFeedItems (feedRec, theFeed, flNewFeed, callback) {
 	const feedUrl = feedRec.feedUrl;
 	const feedId = feedRec.feedId; //2/3/24 by DW
+	const itemsArray = theFeed.items; //8/22/25 by DW
 	const whenstart = new Date ();
 	var ctNewItems = 0;
 	
@@ -1206,6 +1232,14 @@ function checkFeedItems (feedRec, itemsArray, flNewFeed, callback) {
 		if (item.outline !== undefined) {
 			outlineJsontext = utils.jsonStringify (item.outline);
 			}
+		//new metadata element -- 8/22/25 by DW
+			var metadata = new Object (); 
+			if (theFeed.wpSiteId !== undefined) {
+				metadata.wpSiteId = theFeed.wpSiteId;
+				}
+			if (item.wpPostId !== undefined) {
+				metadata.wpPostId = item.wpPostId;
+				}
 		if (item.markdowntext !== undefined) { //8/25/22 by DW
 			markdowntext = item.markdowntext;
 			}
@@ -1225,7 +1259,8 @@ function checkFeedItems (feedRec, itemsArray, flNewFeed, callback) {
 			whenUpdated: whenstart,
 			flDeleted: false,
 			outlineJsontext,
-			markdowntext //8/25/22 by DW
+			markdowntext, //8/25/22 by DW
+			metadata: utils.jsonStringify (metadata) //8/22/25 by DW
 			};
 		isItemInDatabase (feedUrl, guid, function (flThere, dbItem) {
 			var flChanged = !flThere;
@@ -1245,6 +1280,15 @@ function checkFeedItems (feedRec, itemsArray, flNewFeed, callback) {
 							}
 						}
 					}
+				function checkJsonChange (name) { //8/22/25 by DW
+					const json1 = itemRec [name];
+					const json2 = dbItem [name];
+					if (!jsonObjectsEqual (json1, json2)) {
+						console.log (name + " changed.");
+						flChanged = true;
+						}
+					}
+				
 				checkChange ("title");
 				checkChange ("link");
 				checkChange ("description");
@@ -1253,6 +1297,7 @@ function checkFeedItems (feedRec, itemsArray, flNewFeed, callback) {
 				checkChange ("enclosureLength");
 				checkChange ("flDeleted"); //4/22/22 by DW
 				checkChange ("outlineJsontext"); //6/6/25 by DW
+				checkJsonChange ("metadata"); //8/22/25 by DW
 				itemRec.id = dbItem.id; //must preserve this value
 				itemRec.whenCreated = dbItem.whenCreated; //must preserve this value
 				}
@@ -1311,7 +1356,7 @@ function checkFeedAndItems (feedUrl, callback, flNewFeed=false) {
 				}
 			}
 		else {
-			checkFeedItems (feedRec, theFeed.items, false, function (err) { //5/27/22 by DW
+			checkFeedItems (feedRec, theFeed, false, function (err) { //5/27/22 by DW
 				if (callback !== undefined) {
 					callback (undefined, theFeed, feedRec); 
 					}
@@ -1624,7 +1669,6 @@ function getRiver (feedUrl, screenname, callback, metadata=undefined) {
 	
 	const deleteCheck = (config.flCheckForDeleted) ? " flDeleted=false " : ""; //11/20/23 by DW
 	const sqltext = "select * from items " + useIndexFeedId () + " where " + deleteCheck + getFeedClause () + getTimeClause () + " order by pubDate desc limit " + config.maxRiverItems + ";"; //2/12/24 by DW
-	console.log ("getRiver: sqltext == " + sqltext);
 	davesql.runSqltext (sqltext, function (err, result) {
 		if (err) {
 			if (callback !== undefined) {
@@ -2153,7 +2197,7 @@ function subscribeToFeed (screenname, feedUrl, callback) {
 																}
 															else { //8/19/22 by DW -- return before we check in all the new feed items
 																let whenstart = new Date ();
-																checkFeedItems (feedRec, theFeed.items, true, function () {
+																checkFeedItems (feedRec, theFeed, true, function () {
 																	myConsoleLog ("subscribeToFeed: checkFeedItems returned after " + utils.secondsSince (whenstart) + " seconds");
 																	});
 																myConsoleLog ("subscribeToFeed: returning before all the feed items are checked. " + whenstart.toLocaleTimeString ());

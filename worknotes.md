@@ -1,3 +1,9 @@
+#### 8/22/25; 12:35:47 PM by DW
+
+Updated the wpidentity version in package.json to the current one.
+
+Added sqllog as a dependency. wpidentity needs it. 
+
 #### 5/21/25; 11:25:27 AM by DW
 
 Added a little debugging code to websocket notification of new items.
