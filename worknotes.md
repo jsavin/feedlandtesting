@@ -1,3 +1,11 @@
+#### 9/5/25; 9:49:43 AM by DW -- v0.7.0
+
+No changes in this version of feedlandserver. 
+
+We're releasing a new version of feedlanddatabase with support for a new <i>metadata</i> JSON column in the items table.
+
+The version of feedlanddatabase is v0.8.2.
+
 #### 8/22/25; 12:35:47 PM by DW
 
 Updated the wpidentity version in package.json to the current one.

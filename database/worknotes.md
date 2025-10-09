@@ -1,3 +1,7 @@
+#### 9/5/25; 9:56:03 AM by DW
+
+Publishing v0.8.2 via NPM.
+
 #### 9/3/25; 10:45:05 AM by DW
 
 Commented out the debugging code that dumped sqltext in getRiver. Sometimes the sqltext is very long, 
