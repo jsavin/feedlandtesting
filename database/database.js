@@ -1,4 +1,4 @@
-var myProductName = "feedlandDatabase", myVersion = "0.8.2";  
+var myProductName = "feedlandDatabase", myVersion = "0.8.3";  
 
 exports.start = start;
 exports.addSubscription = addSubscription;
@@ -11,7 +11,7 @@ exports.updateNextFeedIfReady = updateNextFeedIfReady;
 exports.getUpdatedFeed = getUpdatedFeed;
 exports.getDatabaseFeed = getDatabaseFeed;
 exports.getFeed = getFeed;
-exports.getRiver = getRiver;
+exports.getRiver = getRiver2;
 exports.deleteItem = deleteItem; //4/22/22 by DW
 exports.saveFeed = saveFeed; //4/28/22 by DW
 exports.saveItem = saveItem; 
@@ -184,10 +184,6 @@ var stats = {
 	itemSerialNum: 1
 	};
 
-var riverCache = new Object (); //8/22/22 by DW
-
-var riverBuildLog = new Array (); //10/10/22 by DW
-var flRiverBuildLogChanged = false;
 
 function initStats () {
 	const appStats = config.getStats ();
@@ -662,6 +658,25 @@ function jsonObjectsEqual (json1, json2) {
 		return (false);
 		}
 	}
+function removeArrayDuplicates (theArray) { //10/24/25 by DW
+	var newArray = new Array ();
+	theArray.forEach (function (item) {
+		if (!newArray.includes (item)) {
+			newArray.push (item);
+			}
+		});
+	return (newArray);
+	}
+function parseJsontext (jsontext) { //10/25/25 by DW
+	var jstruct;
+	try {
+		jstruct = JSON.parse (jsontext)
+		}
+	catch (err) {
+		jstruct = new Object ();
+		}
+	return (jstruct);
+	}
 
 
 function saveFeed (feedRec, callback) {
@@ -729,7 +744,7 @@ function convertDatabaseItem (itemRec) { //convert database item to the item str
 		whenReceived: convertDate (itemRec.whenCreated), //when the database item was created
 		whenUpdated: convertDate (itemRec.whenUpdated), //when the database item last changed
 		likes: convertLikesToArray (itemRec.likes), //10/15/22 by DW
-		metadata: JSON.parse (itemRec.metadata), //8/22/25 by DW
+		metadata: parseJsontext (itemRec.metadata), //8/22/25 by DW
 		}
 	apiRec.ctLikes = apiRec.likes.length; //10/15/22 by DW
 	if (notNull (itemRec.enclosureUrl)) {
@@ -1467,519 +1482,6 @@ function getFeedItems (feedUrl, ctItems, callback) { //8/31/22 by DW
 			}
 		else {
 			callback (undefined, convertItemList (result));
-			}
-		});
-	}
-
-function addToRiverCache (cachekey, feedUrlList, theRiver) { //9/15/22 by DW
-	if (config.flUseRiverCache) { 
-		myConsoleLog ("addToRiverCache: cachekey == " + cachekey); //10/3/23 by DW
-		riverCache [cachekey] = {
-			feedUrlList, 
-			river: theRiver,
-			when: new Date ()
-			};
-		}
-	}
-function clearCachedRivers (feedUrl) { //8/22/22 by DW
-	function logit () { //10/3/23 by DW
-		myConsoleLog ("clearCachedRivers: deleting cache for the river whose key is " + cachekey + ". feedUrl == " + feedUrl);
-		}
-	for (var cachekey in riverCache) {
-		var feedUrlList = riverCache [cachekey].feedUrlList;
-		if (feedUrlList === undefined) { //the "everything" river -- 10/14/22 by DW
-			logit (); //10/3/23 by DW
-			delete riverCache [cachekey];
-			}
-		else {
-			for (var i = 0; i < feedUrlList.length; i++) {
-				if (feedUrlList [i] == feedUrl) {
-					logit (); //10/3/23 by DW
-					delete riverCache [cachekey];
-					break;
-					}
-				}
-			}
-		}
-	}
-function clearOldCachedRivers () { //9/15/22 by DW
-	for (var cachekey in riverCache) {
-		if (utils.secondsSince (riverCache [cachekey].when) > config.ctSecsLifeRiverCache) {
-			myConsoleLog ("clearOldCachedRivers: deleting cache for the river whose key is " + cachekey); //10/3/23 by DW
-			delete riverCache [cachekey];
-			}
-		}
-	}
-function isFeedInRiver (feedUrl, cachekey, callback) { //2/1/23 by DW
-	var flInRiver = false;
-	if (riverCache [cachekey] !== undefined) {
-		var feedUrlList = riverCache [urlOpml].feedUrlList;
-		if (feedUrlList !== undefined) {
-			feedUrlList.forEach (function (url) {
-				if (url == feedUrl) {
-					flInRiver = true;
-					}
-				});
-			}
-		}
-	callback (undefined, flInRiver);
-	}
-
-function startBuildLog () { //10/10/22 by DW
-	if (config.flRiverBuildLogEnabled) {
-		var f = config.riverBuildLogFolder + utils.getDatePath (undefined, false) + ".json";
-		fs.readFile (f, function (err, jsontext) {
-			if (!err) {
-				try {
-					riverBuildLog = JSON.parse (jsontext);
-					}
-				catch (err) {
-					}
-				}
-			});
-		}
-	}
-function addToRiverBuildLog (whenstart, sqltext) {
-	if (config.flRiverBuildLogEnabled) {
-		riverBuildLog.unshift ({
-			when: whenstart.toLocaleTimeString (), 
-			ctSecs: utils.secondsSince (whenstart),
-			sqltext
-			});
-		flRiverBuildLogChanged = true;
-		}
-	}
-function getCurrentRiverBuildLog (callback) {
-	callback (undefined, utils.jsonStringify (riverBuildLog));
-	}
-function saveCurrentBuildLog () {
-	if (config.flRiverBuildLogEnabled) {
-		var f = config.riverBuildLogFolder + utils.getDatePath (undefined, false) + ".json";
-		utils.sureFilePath (f, function () {
-			fs.writeFile (f, utils.jsonStringify (riverBuildLog), function (err) {
-				});
-			});
-		}
-	}
-
-function getRiver (feedUrl, screenname, callback, metadata=undefined) {
-	const whenstart = new Date ();
-	function getFeedClause () {
-		var feedClause;
-		if (feedUrl === undefined) {
-			if (screenname === undefined) { //10/14/22 by DW
-				feedClause = "1 = 1"; //3/2/24 by DW
-				}
-			else {
-				feedClause = "feedurl in (select feedUrl from subscriptions where listName='" + screenname + "')";
-				}
-			}
-		else {
-			if (Array.isArray (feedUrl)) { //it's a list of feed urls -- 8/3/22 by DW
-				var listtext = "";
-				feedUrl.forEach (function (url) {
-					listtext += davesql.encode (url) + ",";
-					});
-				if (listtext.length > 0) {
-					listtext = utils.stringMid (listtext, 1, listtext.length - 1);
-					}
-				if (config.flFeedsHaveIds && config.flCanUseFeedIds) { //2/3/24 by DW
-					feedClause = "feedId in (" + listtext + ")";
-					}
-				else {
-					feedClause = "feedurl in (" + listtext + ")";
-					}
-				}
-			else {
-				feedClause = "feedurl=" + davesql.encode (feedUrl);
-				}
-			}
-		
-		if (feedClause.length > 0) { //10/14/22 by DW
-			if (config.flCheckForDeleted) { //11/20/23 by DW
-				feedClause = " and " + feedClause;
-				}
-			}
-		
-		return (feedClause);
-		}
-	function getTimeClause () { //2/7/24 by DW
-		if (config.ctRiverCutoffDays === undefined) { //this is how you can turn the feature off in config
-			return ("");
-			}
-		else {
-			const whenCutoff = dateDaysBefore (config.ctRiverCutoffDays); //2/7/24 by DW
-			const timeClause = " and pubDate > " + davesql.encode (whenCutoff) + " "; //2/7/24 by DW
-			return (timeClause);
-			}
-		}
-	function useIndexFeedId () { //3/4/24 by DW
-		if (config.flFeedsHaveIds && config.flCanUseFeedIds) {
-			return (" use index (feedId) ");
-			}
-		else {
-			return ("");
-			}
-		}
-	function sortRiver (theFlatArray) {
-		var titles = new Object (), ctDuplicatesSkipped = 0;
-		var theRiver = {
-			feeds: new Array ()
-			};
-		var lastFeedUrl = undefined, itemsForThisFeed;
-		theFlatArray.forEach (function (item) {
-			var flskip = false;
-			if (config.flSkipDuplicateTitles) {
-				function checkForNull (value) {
-					if (value == null) {
-						value = "";
-						}
-					return (value);
-					}
-				var reducedtitle = utils.trimWhitespace (utils.stringLower (checkForNull (item.title)));
-				if (reducedtitle.length > 0) {
-					if (titles [reducedtitle] !== undefined) { //duplicate
-						ctDuplicatesSkipped++;
-						titles [reducedtitle]++;
-						flskip = true;
-						}
-					else {
-						titles [reducedtitle] = 1;
-						}
-					}
-				}
-			if (!flskip) {
-				if (item.feedUrl !== lastFeedUrl) {
-					itemsForThisFeed = {
-						feedUrl: item.feedUrl,
-						whenReceived: item.whenReceived, //8/26/22 by DW
-						items: new Array ()
-						};
-					theRiver.feeds.push (itemsForThisFeed);
-					lastFeedUrl = item.feedUrl;
-					}
-				itemsForThisFeed.items.push (item);
-				}
-			});
-		
-		
-		return (theRiver);
-		}
-	
-	const deleteCheck = (config.flCheckForDeleted) ? " flDeleted=false " : ""; //11/20/23 by DW
-	const sqltext = "select * from items " + useIndexFeedId () + " where " + deleteCheck + getFeedClause () + getTimeClause () + " order by pubDate desc limit " + config.maxRiverItems + ";"; //2/12/24 by DW
-	davesql.runSqltext (sqltext, function (err, result) {
-		if (err) {
-			if (callback !== undefined) {
-				callback (err);
-				}
-			}
-		else {
-			addToRiverBuildLog (whenstart, sqltext);
-			if (callback !== undefined) {
-				let jstruct = sortRiver (convertItemList (result));
-				jstruct.metadata = metadata; //2/1/23 by DW
-				let jsontext = utils.jsonStringify (jstruct);
-				callback (undefined, jsontext);
-				}
-			}
-		});
-	}
-function getRiverFromList (jsontext, callback) {
-	var feedUrlList;
-	try {
-		feedUrlList = JSON.parse (jsontext);
-		}
-	catch (err) {
-		callback (err);
-		return; //2/1/23 by DW
-		}
-	const metadata = {cachekey: ""}; //2/1/23 by DW
-	getRiver (feedUrlList, undefined, callback, metadata);
-	}
-function getRiverFromOpml (urlOpml, callback) { //8/21/22 by DW
-	const whenstart = new Date ();
-	if (riverCache [urlOpml] !== undefined) { //serve from cache
-		myConsoleLog ("getRiverFromOpml (serving from cache): urlOpml == " + urlOpml + ", " + utils.secondsSince (whenstart) + " secs.");
-		callback (undefined, riverCache [urlOpml].river);
-		}
-	else {
-		getOutlineFromOpml (urlOpml, function (err, theOutline) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				const metadata = {cachekey: urlOpml}; //2/1/23 by DW
-				var feedUrlList = new Array ();
-				opml.visitAll (theOutline, function (node) {
-					if (notComment (node)) {
-						if (node.type == "rss") {
-							if (node.xmlUrl !== undefined) {
-								feedUrlList.push (node.xmlUrl);
-								}
-							}
-						}
-					return (true); //keep visiting
-					});
-				metadata.feedUrlList = feedUrlList; 
-				getRiver (feedUrlList, undefined, function (err, river) {
-					if (!err) {
-						addToRiverCache (urlOpml, feedUrlList, river); //9/15/22 by DW
-						}
-					myConsoleLog ("getRiverFromOpml: urlOpml == " + urlOpml + ", " + utils.secondsSince (whenstart) + " secs.");
-					callback (err, river);
-					}, metadata);
-				}
-			});
-		}
-	}
-
-function getListOfFeedIds (theSubscriptions) { //2/3/24 by DW
-	var theList = new Array ();
-	theSubscriptions.forEach (function (sub) {
-		if (config.flFeedsHaveIds && config.flCanUseFeedIds) {
-			theList.push (sub.feedId);
-			}
-		else {
-			theList.push (sub.feedUrl);
-			}
-		});
-	return (theList);
-	}
-
-
-function getRiverFromAllCategory (screenname, callback) { //2/22/24 by DW
-	const catname = "All", ctFeedLimit = 150;
-	const cachekey = "category:" + screenname + "/" + catname, whenstart = new Date ();
-	function getTheFeeds (screenname, catname, callback) {
-		const catnameparam = davesql.encode ("%," + catname + ",%");
-		const sqltext =  "select s.* from subscriptions s join feeds f on s.feedUrl = f.feedUrl where s.listname = " + davesql.encode (screenname) + " and s.categories like " + catnameparam + " order by f.whenUpdated Desc limit " + ctFeedLimit + ";";
-		davesql.runSqltext (sqltext, function (err, result) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				callback (undefined, result);
-				}
-			});
-		}
-	getTheFeeds (screenname, catname, function (err, theSubscriptions) {
-		if (err) {
-			callback (err);
-			}
-		else {
-			const feedUrlList = getListOfFeedIds (theSubscriptions);
-			if (feedUrlList.length == 0) {
-				let message = "Can't get the river because there are no feeds in the \"" + catname + "\" category";
-				callback ({message});
-				}
-			else {
-				const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
-				getRiver (feedUrlList, undefined, function (err, river) {
-					if (!err) {
-						addToRiverCache (cachekey, feedUrlList, river); //9/15/22 by DW
-						}
-					myConsoleLog ("getRiverFromAllCategory: cachekey == " + cachekey + ", " + utils.secondsSince (whenstart) + " secs.");
-					callback (err, river);
-					}, metadata);
-				}
-			}
-		});
-	}
-
-
-function getRiverFromCategory (screenname, catname, callback) {
-	
-	
-	const cachekey = "category:" + screenname + "/" + catname, whenstart = new Date ();
-	function getTheFeeds (screenname, catname, callback) {
-		const catnameparam = davesql.encode ("%," + catname + ",%"); //11/21/23 by DW
-		const sqltext =  "select * from subscriptions where listname=" + davesql.encode (screenname) + " and categories like " + catnameparam + ";";
-		davesql.runSqltext (sqltext, function (err, result) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				callback (undefined, result);
-				}
-			});
-		}
-	if (riverCache [cachekey] !== undefined) { //serve from cache
-		myConsoleLog ("getRiverFromCategory (serving from cache): cachekey == " + cachekey);
-		callback (undefined, riverCache [cachekey].river);
-		}
-	else {
-		getTheFeeds (screenname, catname, function (err, theSubscriptions) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				const feedUrlList = getListOfFeedIds (theSubscriptions);
-				if (feedUrlList.length == 0) {
-					let message = "Can't get the river because there are no feeds in the \"" + catname + "\" category";
-					callback ({message});
-					}
-				else {
-					const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
-					getRiver (feedUrlList, undefined, function (err, river) {
-						if (!err) {
-							addToRiverCache (cachekey, feedUrlList, river); //9/15/22 by DW
-							}
-						myConsoleLog ("getRiverFromCategory: cachekey == " + cachekey + ", " + utils.secondsSince (whenstart) + " secs.");
-						callback (err, river);
-						}, metadata);
-					}
-				}
-			});
-		}
-	}
-
-
-function getRiverFromScreenname (screenname, callback) { //4/25/23 by DW
-	const cachekey = "screenname:" + screenname, whenstart = new Date ();
-	function getTheFeeds (screenname, callback) {
-		const sqltext =  "select * from subscriptions where listname=" + davesql.encode (screenname) + ";";
-		davesql.runSqltext (sqltext, function (err, result) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				callback (undefined, result);
-				}
-			});
-		}
-	if (riverCache [cachekey] !== undefined) { //serve from cache
-		myConsoleLog ("getRiverFromScreenname (serving from cache): cachekey == " + cachekey);
-		callback (undefined, riverCache [cachekey].river);
-		}
-	else {
-		getTheFeeds (screenname, function (err, theSubscriptions) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				var feedUrlList = new Array ();
-				theSubscriptions.forEach (function (sub) {
-					feedUrlList.push (sub.feedUrl);
-					});
-				if (feedUrlList.length == 0) {
-					let message = "Can't get the river because the user \"" + screenname + "\" isn't subscribed to any feeds.";
-					callback ({message});
-					}
-				else {
-					const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
-					getRiver (feedUrlList, undefined, function (err, river) {
-						if (!err) {
-							addToRiverCache (cachekey, feedUrlList, river); //9/15/22 by DW
-							}
-						myConsoleLog ("getRiverFromCategory: cachekey == " + cachekey + ", " + utils.secondsSince (whenstart) + " secs.");
-						callback (err, river);
-						}, metadata);
-					}
-				}
-			});
-		}
-	}
-function getRiverFromEverything (callback) { //10/14/22 by DW
-	const cachekey = "everything";
-	if (riverCache [cachekey] !== undefined) { //serve from cache
-		callback (undefined, riverCache [cachekey].river);
-		}
-	else {
-		const metadata = {cachekey: "everything"}; //2/1/23 by DW
-		getRiver (undefined, undefined, function (err, river) {
-			if (!err) {
-				addToRiverCache (cachekey, undefined, river); 
-				}
-			callback (err, river);
-			}, metadata);
-		}
-	}
-function getRiverFromHotlist (callback) { //10/15/22 by DW
-	const cachekey = "hotlist";
-	if (riverCache [cachekey] !== undefined) { //serve from cache
-		callback (undefined, riverCache [cachekey].river);
-		}
-	else {
-		getHotlist (function (err, theHotlist) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				var feedUrlList = new Array ();
-				theHotlist.forEach (function (item) {
-					feedUrlList.push (item.feedUrl);
-					});
-				if (feedUrlList.length == 0) {
-					let message = "Can't get the river because there are no feeds in the hotlist.";
-					callback ({message});
-					}
-				else {
-					const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
-					getRiver (feedUrlList, undefined, function (err, river) {
-						if (!err) {
-							addToRiverCache (cachekey, feedUrlList, river); 
-							}
-						callback (err, river);
-						}, metadata);
-					}
-				}
-			});
-		}
-	}
-function getRiverFromUserFeeds (callback) { //12/3/22 by DW
-	const cachekey = "userfeeds";
-	function notBlockedUser (feedUrl) { //12/9/22 by DW
-		var flblocked = false;
-		config.blockedUsers.forEach (function (screenname) {
-			if (utils.endsWith (feedUrl, screenname)) {
-				flblocked = true;
-				}
-			});
-		return (!flblocked);
-		}
-	if (riverCache [cachekey] !== undefined) { //serve from cache
-		callback (undefined, riverCache [cachekey].river);
-		}
-	else {
-		const sqltext = "select feedUrl from feeds where feedurl like '" + config.urlForFeeds + "%'"; //1/13/23 by DW
-		davesql.runSqltext (sqltext, function (err, result) {
-			if (err) {
-				callback (err);
-				}
-			else {
-				var feedUrlList = new Array ();
-				result.forEach (function (item) {
-					if (notBlockedUser (item.feedUrl)) { //12/9/22 by DW
-						feedUrlList.push (item.feedUrl);
-						}
-					});
-				if (feedUrlList.length == 0) {
-					let message = "Can't get the river because there are no users with feeds in the database."; //not likely! ;-)
-					callback ({message});
-					}
-				else {
-					const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
-					getRiver (feedUrlList, undefined, function (err, river) {
-						if (!err) {
-							addToRiverCache (cachekey, feedUrlList, river); 
-							}
-						callback (err, river);
-						}, metadata);
-					}
-				}
-			});
-		}
-	}
-
-function getRiverFromReadingList (opmlUrl, callback) { //11/12/23 by DW
-	isReadingListInDatabase (opmlUrl, function (flInDatabase, listRec) {
-		if (flInDatabase) {
-			getRiverFromList (listRec.feedUrls, callback);
-			}
-		else {
-			const message = "Can't get river from the reading list because it isn't in our database.";
-			callback ({message});
 			}
 		});
 	}
@@ -3936,6 +3438,474 @@ function processSubscriptionList (screenname, theList, flDeleteEnabled=true, cal
 			});
 		}
 	
+//rivers -- 10/24/25 by DW
+	var riverCache = new Object (); //8/22/22 by DW
+	
+	var riverBuildLog = new Array (); //10/10/22 by DW
+	var flRiverBuildLogChanged = false;
+	
+	function startBuildLog () { //10/10/22 by DW
+		if (config.flRiverBuildLogEnabled) {
+			var f = config.riverBuildLogFolder + utils.getDatePath (undefined, false) + ".json";
+			fs.readFile (f, function (err, jsontext) {
+				if (!err) {
+					try {
+						riverBuildLog = JSON.parse (jsontext);
+						}
+					catch (err) {
+						}
+					}
+				});
+			}
+		}
+	function addToRiverBuildLog (whenstart, sqltext) {
+		if (config.flRiverBuildLogEnabled) {
+			riverBuildLog.unshift ({
+				when: whenstart.toLocaleTimeString (), 
+				ctSecs: utils.secondsSince (whenstart),
+				sqltext
+				});
+			flRiverBuildLogChanged = true;
+			}
+		}
+	function getCurrentRiverBuildLog (callback) {
+		callback (undefined, utils.jsonStringify (riverBuildLog));
+		}
+	function saveCurrentBuildLog () {
+		if (config.flRiverBuildLogEnabled) {
+			var f = config.riverBuildLogFolder + utils.getDatePath (undefined, false) + ".json";
+			utils.sureFilePath (f, function () {
+				fs.writeFile (f, utils.jsonStringify (riverBuildLog), function (err) {
+					});
+				});
+			}
+		}
+	
+	function addToRiverCache (cachekey, feedUrlList, theRiver) { //9/15/22 by DW
+		if (config.flUseRiverCache) { 
+			myConsoleLog ("addToRiverCache: cachekey == " + cachekey); //10/3/23 by DW
+			riverCache [cachekey] = {
+				feedUrlList, 
+				river: theRiver,
+				when: new Date ()
+				};
+			}
+		}
+	function clearCachedRivers (feedUrl) { //8/22/22 by DW
+		function logit () { //10/3/23 by DW
+			myConsoleLog ("clearCachedRivers: deleting cache for the river whose key is " + cachekey + ". feedUrl == " + feedUrl);
+			}
+		for (var cachekey in riverCache) {
+			var feedUrlList = riverCache [cachekey].feedUrlList;
+			if (feedUrlList === undefined) { //the "everything" river -- 10/14/22 by DW
+				logit (); //10/3/23 by DW
+				delete riverCache [cachekey];
+				}
+			else {
+				for (var i = 0; i < feedUrlList.length; i++) {
+					if (feedUrlList [i] == feedUrl) {
+						logit (); //10/3/23 by DW
+						delete riverCache [cachekey];
+						break;
+						}
+					}
+				}
+			}
+		}
+	function clearOldCachedRivers () { //9/15/22 by DW
+		for (var cachekey in riverCache) {
+			if (utils.secondsSince (riverCache [cachekey].when) > config.ctSecsLifeRiverCache) {
+				myConsoleLog ("clearOldCachedRivers: deleting cache for the river whose key is " + cachekey); //10/3/23 by DW
+				delete riverCache [cachekey];
+				}
+			}
+		}
+	
+	function getListOfFeedIds (theSubscriptions) { //2/3/24 by DW
+		var theList = new Array ();
+		theSubscriptions.forEach (function (sub) {
+			if (config.flFeedsHaveIds && config.flCanUseFeedIds) {
+				theList.push (sub.feedId);
+				}
+			else {
+				theList.push (sub.feedUrl);
+				}
+			});
+		return (theList);
+		}
+	function isFeedInRiver (feedUrl, cachekey, callback) { //2/1/23 by DW
+		var flInRiver = false;
+		if (riverCache [cachekey] !== undefined) {
+			var feedUrlList = riverCache [urlOpml].feedUrlList;
+			if (feedUrlList !== undefined) {
+				feedUrlList.forEach (function (url) {
+					if (url == feedUrl) {
+						flInRiver = true;
+						}
+					});
+				}
+			}
+		callback (undefined, flInRiver);
+		}
+	
+	function getRiverFromCategory (screenname, catname, callback) {
+		const cachekey = "category:" + screenname + "/" + catname, whenstart = new Date ();
+		function getTheFeeds (screenname, catname, callback) {
+			const catnameparam = davesql.encode ("%," + catname + ",%"); //11/21/23 by DW
+			const sqltext =  "select * from subscriptions where listname=" + davesql.encode (screenname) + " and categories like " + catnameparam + ";";
+			davesql.runSqltext (sqltext, function (err, result) {
+				if (err) {
+					callback (err);
+					}
+				else {
+					callback (undefined, result);
+					}
+				});
+			}
+		if (riverCache [cachekey] !== undefined) { //serve from cache
+			myConsoleLog ("getRiverFromCategory (serving from cache): cachekey == " + cachekey);
+			callback (undefined, riverCache [cachekey].river);
+			}
+		else {
+			getTheFeeds (screenname, catname, function (err, theSubscriptions) {
+				if (err) {
+					callback (err);
+					}
+				else {
+					const feedUrlList = getListOfFeedIds (theSubscriptions);
+					if (feedUrlList.length == 0) {
+						let message = "Can't get the river because there are no feeds in the \"" + catname + "\" category";
+						callback ({message});
+						}
+					else {
+						const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
+						getRiver2 (feedUrlList, undefined, function (err, river) {
+							if (!err) {
+								addToRiverCache (cachekey, feedUrlList, river); //9/15/22 by DW
+								}
+							myConsoleLog ("getRiverFromCategory: cachekey == " + cachekey + ", " + utils.secondsSince (whenstart) + " secs.");
+							callback (err, river);
+							}, metadata);
+						}
+					}
+				});
+			}
+		}
+	function getRiverFromHotlist (callback) { //10/15/22 by DW
+		const cachekey = "hotlist";
+		if (riverCache [cachekey] !== undefined) { //serve from cache
+			callback (undefined, riverCache [cachekey].river);
+			}
+		else {
+			getHotlist (function (err, theHotlist) {
+				if (err) {
+					callback (err);
+					}
+				else {
+					var feedUrlList = new Array ();
+					theHotlist.forEach (function (item) {
+						feedUrlList.push (item.feedUrl);
+						});
+					if (feedUrlList.length == 0) {
+						let message = "Can't get the river because there are no feeds in the hotlist.";
+						callback ({message});
+						}
+					else {
+						const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
+						getRiver2 (feedUrlList, undefined, function (err, river) {
+							if (!err) {
+								addToRiverCache (cachekey, feedUrlList, river); 
+								}
+							callback (err, river);
+							}, metadata);
+						}
+					}
+				});
+			}
+		}
+	function getRiverFromUserFeeds (callback) { //12/3/22 by DW
+		const cachekey = "userfeeds";
+		function notBlockedUser (feedUrl) { //12/9/22 by DW
+			var flblocked = false;
+			config.blockedUsers.forEach (function (screenname) {
+				if (utils.endsWith (feedUrl, screenname)) {
+					flblocked = true;
+					}
+				});
+			return (!flblocked);
+			}
+		if (riverCache [cachekey] !== undefined) { //serve from cache
+			callback (undefined, riverCache [cachekey].river);
+			}
+		else {
+			const sqltext = "select feedUrl from feeds where feedurl like '" + config.urlForFeeds + "%'"; //1/13/23 by DW
+			davesql.runSqltext (sqltext, function (err, result) {
+				if (err) {
+					callback (err);
+					}
+				else {
+					var feedUrlList = new Array ();
+					result.forEach (function (item) {
+						if (notBlockedUser (item.feedUrl)) { //12/9/22 by DW
+							feedUrlList.push (item.feedUrl);
+							}
+						});
+					if (feedUrlList.length == 0) {
+						let message = "Can't get the river because there are no users with feeds in the database."; //not likely! ;-)
+						callback ({message});
+						}
+					else {
+						const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
+						getRiver2 (feedUrlList, undefined, function (err, river) {
+							if (!err) {
+								addToRiverCache (cachekey, feedUrlList, river); 
+								}
+							callback (err, river);
+							}, metadata);
+						}
+					}
+				});
+			}
+		}
+	function getRiverFromEverything (callback) { //10/14/22 by DW
+		const cachekey = "everything";
+		if (riverCache [cachekey] !== undefined) { //serve from cache
+			callback (undefined, riverCache [cachekey].river);
+			}
+		else {
+			const metadata = {cachekey: "everything"}; //2/1/23 by DW
+			getRiver2 (undefined, undefined, function (err, river) {
+				if (!err) {
+					addToRiverCache (cachekey, undefined, river); 
+					}
+				callback (err, river);
+				}, metadata);
+			}
+		}
+	function getRiverFromScreenname (screenname, callback) { //4/25/23 by DW
+		const cachekey = "screenname:" + screenname, whenstart = new Date ();
+		function getTheFeeds (screenname, callback) {
+			const sqltext =  "select * from subscriptions where listname=" + davesql.encode (screenname) + ";";
+			davesql.runSqltext (sqltext, function (err, result) {
+				if (err) {
+					callback (err);
+					}
+				else {
+					callback (undefined, result);
+					}
+				});
+			}
+		if (riverCache [cachekey] !== undefined) { //serve from cache
+			myConsoleLog ("getRiverFromScreenname (serving from cache): cachekey == " + cachekey);
+			callback (undefined, riverCache [cachekey].river);
+			}
+		else {
+			getTheFeeds (screenname, function (err, theSubscriptions) {
+				if (err) {
+					callback (err);
+					}
+				else {
+					var feedUrlList = new Array ();
+					theSubscriptions.forEach (function (sub) {
+						feedUrlList.push (sub.feedUrl);
+						});
+					if (feedUrlList.length == 0) {
+						let message = "Can't get the river because the user \"" + screenname + "\" isn't subscribed to any feeds.";
+						callback ({message});
+						}
+					else {
+						const metadata = {cachekey, feedUrlList}; //2/1/23 by DW
+						getRiver2 (feedUrlList, undefined, function (err, river) {
+							if (!err) {
+								addToRiverCache (cachekey, feedUrlList, river); //9/15/22 by DW
+								}
+							myConsoleLog ("getRiverFromCategory: cachekey == " + cachekey + ", " + utils.secondsSince (whenstart) + " secs.");
+							callback (err, river);
+							}, metadata);
+						}
+					}
+				});
+			}
+		}
+	
+	function getRiverFromReadingList (opmlUrl, callback) { //11/12/23 by DW
+		isReadingListInDatabase (opmlUrl, function (flInDatabase, listRec) {
+			if (flInDatabase) {
+				getRiverFromList (listRec.feedUrls, callback);
+				}
+			else {
+				const message = "Can't get river from the reading list because it isn't in our database.";
+				callback ({message});
+				}
+			});
+		}
+	function getRiverFromList (jsontext, callback) {
+		var feedUrlList;
+		try {
+			feedUrlList = JSON.parse (jsontext);
+			}
+		catch (err) {
+			callback (err);
+			return; //2/1/23 by DW
+			}
+		const metadata = {cachekey: ""}; //2/1/23 by DW
+		getRiver2 (feedUrlList, undefined, callback, metadata);
+		}
+	function getRiverFromOpml (urlOpml, callback) { //8/21/22 by DW
+		const whenstart = new Date ();
+		if (riverCache [urlOpml] !== undefined) { //serve from cache
+			myConsoleLog ("getRiverFromOpml (serving from cache): urlOpml == " + urlOpml + ", " + utils.secondsSince (whenstart) + " secs.");
+			callback (undefined, riverCache [urlOpml].river);
+			}
+		else {
+			getOutlineFromOpml (urlOpml, function (err, theOutline) {
+				if (err) {
+					callback (err);
+					}
+				else {
+					const metadata = {cachekey: urlOpml}; //2/1/23 by DW
+					var feedUrlList = new Array ();
+					opml.visitAll (theOutline, function (node) {
+						if (notComment (node)) {
+							if (node.type == "rss") {
+								if (node.xmlUrl !== undefined) {
+									feedUrlList.push (node.xmlUrl);
+									}
+								}
+							}
+						return (true); //keep visiting
+						});
+					metadata.feedUrlList = feedUrlList; 
+					getRiver2 (feedUrlList, undefined, function (err, river) {
+						if (!err) {
+							addToRiverCache (urlOpml, feedUrlList, river); //9/15/22 by DW
+							}
+						myConsoleLog ("getRiverFromOpml: urlOpml == " + urlOpml + ", " + utils.secondsSince (whenstart) + " secs.");
+						callback (err, river);
+						}, metadata);
+					}
+				});
+			}
+		}
+	
+	function getRiver2 (feedUrl, screenname, callback, metadata=undefined) {
+		const whenstart = new Date ();
+		function sortRiver (theFlatArray) {
+			var titles = new Object (), ctDuplicatesSkipped = 0;
+			var theRiver = {
+				feeds: new Array ()
+				};
+			var lastFeedUrl = undefined, itemsForThisFeed;
+			theFlatArray.forEach (function (item) {
+				var flskip = false;
+				if (config.flSkipDuplicateTitles) {
+					function checkForNull (value) {
+						if (value == null) {
+							value = "";
+							}
+						return (value);
+						}
+					var reducedtitle = utils.trimWhitespace (utils.stringLower (checkForNull (item.title)));
+					if (reducedtitle.length > 0) {
+						if (titles [reducedtitle] !== undefined) { //duplicate
+							ctDuplicatesSkipped++;
+							titles [reducedtitle]++;
+							flskip = true;
+							}
+						else {
+							titles [reducedtitle] = 1;
+							}
+						}
+					}
+				if (!flskip) {
+					if (item.feedUrl !== lastFeedUrl) {
+						itemsForThisFeed = {
+							feedUrl: item.feedUrl,
+							whenReceived: item.whenReceived, //8/26/22 by DW
+							items: new Array ()
+							};
+						theRiver.feeds.push (itemsForThisFeed);
+						lastFeedUrl = item.feedUrl;
+						}
+					itemsForThisFeed.items.push (item);
+					}
+				});
+			
+			
+			return (theRiver);
+			}
+		
+		function getSqlForListofUrls (urlList) { //10/24/25 by DW
+			urlList = removeArrayDuplicates (urlList); 
+			const firstUrlInList = davesql.encode (urlList [0]);
+			var restOfList = "";
+			for (var i = 1; i < urlList.length; i++) {
+				restOfList += "UNION ALL SELECT " + davesql.encode (urlList [i]) + "\n";
+				}
+			sqltext = `
+				SELECT i.*
+				FROM items i FORCE INDEX (itemsIndex2)
+				JOIN (
+					SELECT ${firstUrlInList} AS feedUrl
+					${restOfList}
+					) 
+				AS feeds ON feeds.feedUrl = i.feedUrl
+				WHERE i.flDeleted = 0
+				ORDER BY i.pubDate DESC
+				LIMIT ${config.maxRiverItems};
+				`
+			return (sqltext);
+			}
+		function getSqlForEverythingRiver () { //10/25/25 by DW
+			sqltext = `
+				SELECT i.*
+				FROM items i FORCE INDEX (itemsIndex2)
+				WHERE i.flDeleted = 0
+				ORDER BY i.pubDate DESC
+				LIMIT ${config.maxRiverItems};
+				`
+			return (sqltext);
+			}
+		
+		var sqltext = "", flRunSql = true;
+		if (Array.isArray (feedUrl)) { //it's a list of feed urls
+			sqltext = getSqlForListofUrls (feedUrl);
+			}
+		else {
+			if ((feedUrl === undefined) && (screenname=== undefined)) { //from everything
+				sqltext = getSqlForEverythingRiver (feedUrl);
+				}
+			else {
+				if (callback !== undefined) {
+					const message = "Can't get the river because we were expecting a list of feeds.";
+					callback ({message});
+					}
+				flRunSql = false;
+				}
+			}
+		if (flRunSql) {
+			davesql.runSqltext (sqltext, function (err, result) {
+				if (err) {
+					if (callback !== undefined) {
+						callback (err);
+						}
+					}
+				else {
+					addToRiverBuildLog (whenstart, sqltext);
+					
+					console.log ("getRiver2: " + utils.secondsSince (whenstart) + " secs.");
+					console.log ("getRiver2: sqltext == " + sqltext);
+					
+					if (callback !== undefined) {
+						let jstruct = sortRiver (convertItemList (result));
+						jstruct.metadata = metadata; //2/1/23 by DW
+						let jsontext = utils.jsonStringify (jstruct);
+						callback (undefined, jsontext);
+						}
+					}
+				});
+			}
+		}
 
 function start (options, callback) {
 	function everySecond () {

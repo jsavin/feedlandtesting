@@ -1,3 +1,13 @@
+#### 10/26/25; 12:04:25 PM by DW -- v0.7.1
+
+No changes in this version of feedlandserver. 
+
+New version of feedlanddatabase is v0.8.3.
+
+getRiver has been completely re-coded, with a new join-based query that we expect will be much faster on systems with large items tables. 
+
+https://github.com/scripting/feedlandInstall/issues/69
+
 #### 9/5/25; 9:49:43 AM by DW -- v0.7.0
 
 No changes in this version of feedlandserver. 
@@ -5,6 +15,10 @@ No changes in this version of feedlandserver.
 We're releasing a new version of feedlanddatabase with support for a new <i>metadata</i> JSON column in the items table.
 
 The version of feedlanddatabase is v0.8.2.
+
+Also had to release a new version of wpidentity, v0.5.25, the last public version was 0.5.24. 
+
+Note, I have a private way of updating apps that doesn't go through NPM so I can test new versions in deployed apps without risking breaking other people's apps. 
 
 #### 8/22/25; 12:35:47 PM by DW
 

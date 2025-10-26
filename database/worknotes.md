@@ -1,3 +1,43 @@
+#### 10/26/25; 11:10:54 AM by DW -- v0.8.3
+
+Finishing the new getRiver function. It will get more testing, so there may still be changes. 
+
+I left getRiver2 as-is, changed what we export as "getRiver" to be getRiver2, and commented out the source to the original getRiver, I want there to be a record of this, so I left it in the code, commented out. 
+
+My <a href="http://scripting.com/code/feedland/database/riverkinds.opml">notes</a> about the different kinds of rivers, went through the user interface of FeedLand and the code in database.js, to be sure we caught the examples. It turns out they were all just sending lists of feeds to getRiver. 
+
+#### 10/25/25; 10:06:34 AM by DW
+
+In convertDatabaseItem, itemRec.metadata is undefined sometimes, prepare for that. 
+
+#### 10/24/25; 8:59:02 AM by DW
+
+We think we've found the performance problem in building rivers in databases with very large items tables. This probably is going to require an overhaul of the river code.
+
+* I created a new code section at the bottom where I've moved all the river code. 
+
+* In the build script, I do not have it updating any of the installations other than the one on my desktop. Made this mistake once before and it forced me to reinitialize the database on feedland.org. 
+
+* Scott Hanson created an example to work with for the most common case of rivers, getRiverFromCategory. 
+
+* I'm going to start a new function, getRiver2 which works exactly as the old version, but generates the new kind of SQL code. 
+
+* I implemented the getRiverFromCategory case in getRiver2. 
+
+* Created the new itemsIndex2 index in the feedlandsocial database.
+
+create index itemsIndex2 on items(flDeleted, pubDate DESC, feedUrl);
+
+* Got the getRiverFromCategory query working
+
+every feed in the list i'm using appears twice
+
+i'm going to add code that only includes a feed once
+
+* Follow this thread
+
+https://github.com/scripting/feedlandDev/issues/8
+
 #### 9/5/25; 9:56:03 AM by DW
 
 Publishing v0.8.2 via NPM.
