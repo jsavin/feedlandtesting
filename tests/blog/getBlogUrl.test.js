@@ -3,17 +3,14 @@
 const test = require ("node:test");
 const assert = require ("node:assert/strict");
 
-const withModuleStubs = require ("../helpers/moduleStubs.js");
 const testConfig = require ("../helpers/config.js");
+const blog = require ("../../blog");
 
-withModuleStubs (() => {
-	const blog = require ("../../blog");
-	blog.start ({
-		urlForFeeds: testConfig.urlForFeeds
-		});
+blog.start ({
+	urlForFeeds: testConfig.urlForFeeds
+	});
 
-	test ("getBlogUrl builds feed URL for screenname", () => {
-		const actual = blog.getBlogUrl ("alice");
-		assert.equal (actual, `${testConfig.urlForFeeds}alice.xml`);
-		});
+test ("getBlogUrl builds feed URL for screenname", () => {
+	const actual = blog.getBlogUrl ("alice");
+	assert.equal (actual, `${testConfig.urlForFeeds}alice.xml`);
 	});

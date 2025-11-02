@@ -3,10 +3,7 @@
 const test = require ("node:test");
 const assert = require ("node:assert/strict");
 
-const withModuleStubs = require ("../helpers/moduleStubs.js");
-
-withModuleStubs (() => {
-	const database = require ("../../database/database.js");
+const database = require ("../../database/database.js");
 
 	test ("convertDatabaseItem normalizes metadata and enclosure values", () => {
 		const now = new Date ("2025-10-30T12:00:00Z");
@@ -63,4 +60,3 @@ withModuleStubs (() => {
 		assert.equal (result.pubDate, undefined);
 		assert.equal (result.ctLikes, 0);
 		});
-	});

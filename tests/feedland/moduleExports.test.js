@@ -3,12 +3,8 @@
 const test = require ("node:test");
 const assert = require ("node:assert/strict");
 
-const withModuleStubs = require ("../helpers/moduleStubs.js");
+const feedland = require ("../../feedland.js");
 
-withModuleStubs (() => {
-	const feedland = require ("../../feedland.js");
-
-	test ("feedland module exposes a start function", () => {
-		assert.equal (typeof feedland.start, "function");
-		});
+test ("feedland module exposes a start function", () => {
+	assert.equal (typeof feedland.start, "function");
 	});
