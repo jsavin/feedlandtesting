@@ -1,4 +1,6 @@
-# FeedLand Agent Guide
+# FeedLand Testing Agent Guide
+
+These notes apply to the upstream FeedLand service maintained in `scripting/feedland`. Use them to reproduce behavior locally inside this `feedlandtesting` fork, stage fixes, and prepare upstream issue reports. The canonical code continues to live in Dave’s repository.
 
 ## Purpose
 This directory hosts quick-reference docs to help AI coding agents ramp up on the FeedLand codebase. Keep the guidance concise, actionable, and in sync with the main project documentation.
@@ -26,7 +28,6 @@ This directory hosts quick-reference docs to help AI coding agents ramp up on th
 - **2/26/24**: Added `config.httpRequestTimeoutSecs` (default 1) for the feed reader.
 
 ## Contribution Reminders
-- Follow `//MM/DD/YY by DW` comment style when documenting behavior changes.
-- Prefer manual smoke tests; record what you exercised when proposing changes.
-- Keep `emailtemplate.html` and other shipped assets current when flows change.
-
+- Follow the upstream comment style (`//MM/DD/YY by DW`) when documenting experiments so the context maps cleanly back to Dave’s code.
+- Prefer manual smoke tests; record what you exercised before filing upstream bug reports at <https://github.com/scripting/feedlandDev/issues>.
+- Keep `emailtemplate.html` and other shipped assets in sync with upstream assumptions when simulating user-facing changes locally.

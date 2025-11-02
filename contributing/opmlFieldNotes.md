@@ -1,5 +1,7 @@
 # FeedLand OPML Field Notes
 
+Use these background notes to understand upstream UX expectations when crafting tests in this fork. Any behavioral fixes should ultimately be proposed back to `scripting/feedland`.
+
 ## `about.opml`
 - FeedLand frames feeds, news, and people as a shared community; all feed lists and categories are public.
 - The Feed List page is the primary control surface: sortable columns, inline five-item previews, category tagging, and quick subscription toggles.

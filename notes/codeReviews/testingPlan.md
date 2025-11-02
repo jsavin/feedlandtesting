@@ -1,5 +1,7 @@
 # FeedLand Testing Implementation Plan
 
+Follow this playbook when extending automated coverage in the `feedlandtesting` fork; successful patterns should be documented and, where appropriate, recommended to the `scripting/feedland` maintainers.
+
 #### 10/31/25; 04:28:26 PM by JES -- Standing up automated coverage with `node:test`
 
 Decision & Rationale

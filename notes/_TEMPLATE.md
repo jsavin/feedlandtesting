@@ -1,6 +1,6 @@
 # Notes Entry Template
 
-Use this skeleton for any document in `notes/`, keeping conventions aligned with the rest of the project.
+Use this skeleton for any document in `notes/`, keeping conventions aligned with the rest of the project and pointing back to the relevant upstream (`scripting/feedland`) context.
 
 ```
 #### MM/DD/YY; HH:MM:SS AM by <initials> -- <short title>

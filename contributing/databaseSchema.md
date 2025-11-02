@@ -1,5 +1,7 @@
 # FeedLand Database Cheat Sheet
 
+These notes describe the schema expected by upstream `scripting/feedland`. Reference them while building fixtures or verifying SQL behavior in this testing fork; the authoritative definitions continue to ship from Dave’s project.
+
 FeedLand uses MySQL via `davesql`, with connection details supplied through `config.database`. Tables are managed with MySQL `REPLACE` semantics (so each logical key must stay unique), and foreign keys are enforced in code rather than in SQL. Below is a field-level map distilled from `database/database.js` (v0.8.3) as shipped in this repo.
 
 ## `feeds`

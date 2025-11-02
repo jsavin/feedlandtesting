@@ -1,6 +1,6 @@
 # CodeReviews Directory
 
-Use this folder to track ongoing review work as FeedLand moves from early production to broader adoption.
+Use this folder to track review work for the upstream `scripting/feedland` project. Findings documented here should translate into upstream issues (filed at <https://github.com/scripting/feedlandDev/issues>) or status updates once they are validated in this testing fork.
 
 - `reviewPlan.md` — master checklist of upcoming review tracks (security, privacy, reliability, etc.) with suggested follow-up tasks.
 - `notesYYYYMMDD.md` — individual review logs. Name new files with the date of the review session so they sort chronologically (for example `notes20251030.md`).

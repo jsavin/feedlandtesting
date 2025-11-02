@@ -1,5 +1,7 @@
 # FeedLand Project Structure & Dependencies
 
+This summary mirrors the canonical layout in `scripting/feedland`. Use it when navigating the mirrored sources in this testing fork and when mapping findings back to upstream files.
+
 ## Service Layout
 - `feedland.js` is the Node entry point; it wires `start()` to the HTTP server, websocket notifications, and scheduled feed checks.
 - `blog.js` hosts publishing helpers and feed generation logic; run with `node blog.js` for isolated exercise.

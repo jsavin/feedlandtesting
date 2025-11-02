@@ -1,5 +1,7 @@
 # MustDo Issues
 
+Track high-severity findings here while we test and review `scripting/feedland`. When an item is validated, raise it upstream—preferably via <https://github.com/scripting/feedlandDev/issues> (supplemented by email or worknotes entries when needed)—and note the outcome.
+
 #### 11/01/25; 11:03:00 PM by JES -- Consolidating urgent remediation items
 
 Context:

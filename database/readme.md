@@ -1,5 +1,7 @@
 # FeedLand database
 
+This directory mirrors the upstream `scripting/feedland/database` package so we can test and review changes locally. The authoritative package remains in Dave Winer’s repository.
+
 A database for storing feeds for FeedLand aggregators. 
 
 ### What is this?
@@ -11,4 +13,3 @@ This is the source code for the NPM package <a href="https://github.com/scriptin
 It's part of the feedland server software, required by the feedland package. 
 
 Licensed under GPL2 as is the feedland package.
-

@@ -1,5 +1,7 @@
 # FeedLand Backup & Recovery Review
 
+Document backup and recovery gaps uncovered while exercising `scripting/feedland` via this testing fork so we can brief upstream maintainers with concrete evidence.
+
 #### 10/31/25; 12:44:55 AM by JES -- Nightly backup coverage audit
 
 Context

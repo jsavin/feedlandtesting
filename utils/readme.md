@@ -1,5 +1,7 @@
 # feedlandUtils
 
+This helper mirrors the upstream tooling so we can script local experiments in the `feedlandtesting` fork. Any durable utility work should ultimately be proposed back to `scripting/feedland`.
+
 Sometimes you need to write a utility for database management that can't be done at the command line. This is a shell for such utilities.
 
 #### How to
@@ -9,4 +11,3 @@ Look for the comment that says: <i>Call your utilities here.</i> You can put cod
 You must add your own config.json file that includes a database section, as shown in the example file in this folder.
 
 At some point we will be doing these things in Drummer's scripting language, but not there yet. 
-

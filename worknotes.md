@@ -1,3 +1,5 @@
+<!-- This file mirrors upstream worknotes from `scripting/feedland` so testers can cross-reference official releases. Do not treat entries below as change history for this fork. -->
+
 #### 10/26/25; 12:04:25 PM by DW -- v0.7.1
 
 No changes in this version of feedlandserver. 
@@ -397,4 +399,3 @@ Previouslly we were using daveappserver via the lib folder, but it's mature enou
 ### 7/3/22 by DW
 
 Disabled publishFileCallback. See the comment at the head of the routine for details. 
-

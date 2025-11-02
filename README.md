@@ -1,14 +1,12 @@
-# feedLand
+# feedlandtesting
 
-This is the source code for the NPM package <a href="https://www.npmjs.com/package/feedland?activeTab=readme">feedland</a>. 
+This repository is a testing and review sandbox for Dave Winer’s upstream project at <https://github.com/scripting/feedland>. The canonical source still lives in that repo and is edited through Frontier/OPML workflows, so use this fork to stage experiments, document findings, and validate fixes before filing upstream bug reports in <https://github.com/scripting/feedlandDev/issues>.
 
-### How to use?
+### Working with FeedLand locally
 
-If you want to install a FeedLand server, follow the <a href="https://github.com/scripting/feedlandInstall/blob/main/docs/setup.md">instructions</a> in the feedlandInstall repo.
+To install or run a real FeedLand server, follow the <a href="https://github.com/scripting/feedlandInstall/blob/main/docs/setup.md">feedlandInstall</a> instructions against the upstream repository. The docs, scripts, and notes in this fork mirror that environment so agents can reproduce issues and test candidate fixes without touching the canonical code.
 
-If you want to build a new server application around FeedLand you can use this package. 
-
-If you want to build around just the database and not the API, you can use the feedlandDatabase NPM package, whose source is in the <a href="https://github.com/scripting/feedland/tree/main/database">feedlandDatabase</a> folder here. 
+If you want to explore just the database layer, continue to consume the `feedlandDatabase` NPM package. Its official sources remain in <a href="https://github.com/scripting/feedland/tree/main/database">scripting/feedland/database</a>; we keep a copy here strictly for reference and local testing.
 
 - ### Scripts
 
@@ -25,6 +23,6 @@ If you want to build around just the database and not the API, you can use the f
 - `scripts/bench-getriver.js` &mdash; quick latency probe for `/getriver`; set `FEEDLAND_HOST` and `FEEDLAND_BENCH_SCREENNAME`.
 - `scripts/run-tests.sh` &mdash; provisioning harness that installs MySQL via Homebrew when needed, creates a timestamped temporary database (for example, `feedland_test_20250308112233`) in `/tmp`, runs `npm test`, and drops the database afterwards. Override MySQL root credentials via `MYSQL_ROOT_USER` / `MYSQL_ROOT_PASS`. Capture output with something like `./scripts/run-tests.sh | tee /tmp/feedland-test.log` if you want a log file.
 
-### This repo is public
+### Scope of this fork
 
-It was announced as public in <a href="http://scripting.com/2023/04/24/151114.html">this post</a> on Scripting News on April 24, 2023. 
+All documentation under `contributing/` and `notes/` describes the upstream FeedLand service. When you discover bugs or improvements, capture the rationale here, exercise the scripts/tests below, and then file actionable reports in the upstream tracker at <https://github.com/scripting/feedlandDev/issues>. Avoid treating this fork as a production codebase; its purpose is collaborative review and experimentation.

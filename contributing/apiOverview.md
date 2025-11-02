@@ -1,5 +1,7 @@
 # FeedLand HTTP API Reference
 
+This is an orientation guide for the upstream FeedLand API. Use it to drive tests and reviews in this fork, then translate validated fixes or regressions into upstream issues.
+
 The server bootstraps `daveappserver` with `handleHttpRequest` (see `feedland.js`). Requests are split on verb, and most JSON responses go through `httpReturn`, which emits `application/json`. Routes that call `returnOpml`, `returnHtml`, or `returnPlainText` change the MIME type accordingly.
 
 Authentication relies on `callWithScreenname`, which in turn calls `getScreenname` (Twitter/email cookie checks inside `daveappserver`). Any route wrapped with `callWithScreenname` requires the caller to be logged in; others are open.

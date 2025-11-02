@@ -1,5 +1,7 @@
 # FeedLand Testing Roadmap
 
+This roadmap tracks test coverage we exercise inside `feedlandtesting` to inform upstream proposals for `scripting/feedland`.
+
 #### 10/31/25; 12:00:51 AM by JES -- Establishing coverage targets
 
 Context:

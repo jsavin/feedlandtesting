@@ -1,5 +1,7 @@
 # FeedLand Security Review
 
+Use this document to capture security findings discovered while testing `scripting/feedland` in this fork. Summaries and action items should eventually be communicated upstream.
+
 #### 10/31/25; 12:24:15 AM by JES -- Authentication & XSS first-pass findings
 
 Context

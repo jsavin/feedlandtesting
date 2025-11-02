@@ -1,12 +1,14 @@
 # FeedLand Tests
 
+These suites exercise upstream `scripting/feedland` behavior inside the `feedlandtesting` sandbox. Use the results to back up upstream bug reports or change requests filed at <https://github.com/scripting/feedlandDev/issues>; do not expect them to gate the canonical repo.
+
 Run the automated suites with:
 
 ```
 npm test
 ```
 
-This invokes Node’s built-in `node:test` runner. The tests load feedland modules with lightweight stubs for external dependencies (see `tests/helpers/moduleStubs.js`) so they can execute without a full MySQL/S3/github environment.
+This invokes Node’s built-in `node:test` runner. Tests rely on the real Dave-owned packages under `node_modules`; individual suites override only the side-effectful bits (SQL queries, network calls) so the assertions stay focused on FeedLand behavior.
 
 ## Smoke & bench scripts
 

@@ -1,5 +1,7 @@
 # FeedLand Review Plan
 
+This plan guides review work executed in the `feedlandtesting` fork and rolled upstream to `scripting/feedland` once validated.
+
 #### 10/30/25; 11:46:44 PM by JES -- Early production review tracks
 
 Context:
