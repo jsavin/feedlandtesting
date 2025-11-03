@@ -10,7 +10,19 @@
 			<link>http://example.com/posts/1</link>
 			<guid isPermaLink="true">http://example.com/posts/1</guid>
 			<pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
-			<description>One</description>
+			<description><![CDATA[<p>Episode summary with <strong>HTML</strong>.</p>]]></description>
+			<enclosure url="http://example.com/audio/episode1.mp3" length="12345678" type="audio/mpeg"/>
+			<category domain="http://example.com/categories">technology</category>
+			<content:encoded xmlns:content="http://purl.org/rss/1.0/modules/content/"><![CDATA[<p>Full content for the episode.</p>]]></content:encoded>
+			<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://example.com/images/ep1.jpg" width="640" height="480"/>
+		</item>
+		<item>
+			<title>Second Item with enclosure</title>
+			<link>http://example.com/posts/2</link>
+			<guid isPermaLink="false">urn:uuid:example:2</guid>
+			<pubDate>Tue, 02 Jan 2024 00:00:00 GMT</pubDate>
+			<description>Two</description>
+			<enclosure url="http://example.com/video/clip.mp4" length="987654" type="video/mp4"/>
 		</item>
 	</channel>
 </rss>
