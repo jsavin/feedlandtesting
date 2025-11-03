@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:media="http://search.yahoo.com/mrss/"
+	xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
 	<channel>
 		<title>Sample RSS 2.0</title>
 		<link>http://example.com/</link>
 		<description>Example RSS 2.0 feed used for tests.</description>
 		<language>en-us</language>
+		<itunes:author>Example Network</itunes:author>
+		<itunes:summary>Podcast-style feed with sample metadata.</itunes:summary>
+		<itunes:image href="http://example.com/images/show.jpg"/>
 		<item>
 			<title>First Item</title>
 			<link>http://example.com/posts/1</link>
@@ -13,8 +19,10 @@
 			<description><![CDATA[<p>Episode summary with <strong>HTML</strong>.</p>]]></description>
 			<enclosure url="http://example.com/audio/episode1.mp3" length="12345678" type="audio/mpeg"/>
 			<category domain="http://example.com/categories">technology</category>
-			<content:encoded xmlns:content="http://purl.org/rss/1.0/modules/content/"><![CDATA[<p>Full content for the episode.</p>]]></content:encoded>
-			<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://example.com/images/ep1.jpg" width="640" height="480"/>
+			<content:encoded><![CDATA[<p>Full content for the episode.</p>]]></content:encoded>
+			<media:thumbnail url="http://example.com/images/ep1.jpg" width="640" height="480"/>
+			<itunes:duration>01:02:03</itunes:duration>
+			<itunes:subtitle>Episode 1 subtitle</itunes:subtitle>
 		</item>
 		<item>
 			<title>Second Item with enclosure</title>
@@ -23,6 +31,7 @@
 			<pubDate>Tue, 02 Jan 2024 00:00:00 GMT</pubDate>
 			<description>Two</description>
 			<enclosure url="http://example.com/video/clip.mp4" length="987654" type="video/mp4"/>
+			<itunes:duration>600</itunes:duration>
 		</item>
 	</channel>
 </rss>

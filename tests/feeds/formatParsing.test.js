@@ -30,6 +30,9 @@ test ("RSS 2.0 fixture parses with namespaces and enclosures", async () => {
 	assert.equal (first.enclosures [0].type, "audio/mpeg");
 	assert.equal (first.categories [0], "technology");
 	assert.ok (first["content:encoded"]);
+	const channelMeta = first.meta;
+	assert.equal (channelMeta["itunes:summary"]["#"], "Podcast-style feed with sample metadata.");
+	assert.equal (first["itunes:duration"]["#"], "01:02:03");
 });
 
 test ("Atom 1.0 fixture parses with enclosure links", async () => {
