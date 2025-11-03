@@ -97,6 +97,11 @@ fi
 	"$NPM_BIN" install --prefer-online --no-save
 )
 
+# Capture dependency snapshot for traceability
+"$NPM_BIN" ls --depth=0 >"$TEMP_DIR/npm-ls.txt"
+echo "Dependency snapshot (npm ls --depth=0):"
+cat "$TEMP_DIR/npm-ls.txt"
+
 # Build config.json via setup.js
 CONFIG_CMD=("$NODE_BIN" "$SCRIPT_DIR/setup.js" \
 	--non-interactive \

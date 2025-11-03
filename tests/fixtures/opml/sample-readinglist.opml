@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+	<head>
+		<title>Sample Reading List</title>
+	</head>
+	<body>
+		<outline text="Shared Feed" type="rss" xmlUrl="http://example.com/shared.xml"/>
+		<outline text="New Feed" type="rss" xmlUrl="http://example.com/new.xml" category="podcasts"/>
+	</body>
+</opml>

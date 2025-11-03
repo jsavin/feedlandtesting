@@ -2,6 +2,8 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const feedlanddatabase = require("feedlanddatabase");
 const daveappserver = require("daveappserver");
@@ -101,6 +103,7 @@ function createHandler() {
 
 	const subscribeCalls = [];
 	const unsubscribeCalls = [];
+	const opmlCalls = [];
 
 	feedlanddatabase.subscribeToFeed = (screenname, url, callback) => {
 		subscribeCalls.push({screenname, url});
@@ -114,6 +117,10 @@ function createHandler() {
 		if (callback) {
 			callback(undefined, {feedUrl: url});
 		}
+	};
+
+	feedlanddatabase.processSubscriptionList = (screenname, list, flDeleteEnabled) => {
+		opmlCalls.push({screenname, list, flDeleteEnabled});
 	};
 
 	let capturedOptions;
@@ -164,6 +171,7 @@ function createHandler() {
 		handler: capturedOptions.httpRequest,
 		subscribeCalls,
 		unsubscribeCalls,
+		opmlCalls,
 		restore() {
 			feedlanddatabase.start = original.feedlandDbStart;
 			feedlanddatabase.updateNextFeedIfReady = original.updateNextFeedIfReady;
@@ -177,6 +185,7 @@ function createHandler() {
 			feedlanddatabase.getFeedItems = original.getFeedItems;
 			feedlanddatabase.subscribeToFeed = original.subscribeToFeed;
 			feedlanddatabase.deleteSubscription = original.deleteSubscription;
+			feedlanddatabase.processSubscriptionList = original.processSubscriptionList;
 			daveappserver.start = original.daveappserverStart;
 			davesql.start = original.davesqlStart;
 			davesql.runSqltext = original.davesqlRun;
@@ -188,7 +197,7 @@ function createHandler() {
 	};
 }
 
-const {handler, subscribeCalls, unsubscribeCalls, restore} = createHandler();
+const {handler, subscribeCalls, unsubscribeCalls, opmlCalls, restore} = createHandler();
 
 test("GET /getfeed returns JSON feed info", async () => {
 	const response = await runRequest(handler, {
@@ -277,6 +286,28 @@ test("GET /unsublist removes each feed via deleteSubscription", async () => {
 		{screenname: "alice", url: "http://example.com/a.xml"},
 		{screenname: "alice", url: "http://example.com/b.xml"}
 	]);
+	const parsed = JSON.parse(response.body);
+	assert.equal(parsed.length, 2);
+});
+
+test("POST /opmlsubscribe delegates to processSubscriptionList", async () => {
+	opmlCalls.length = 0;
+	const opmlText = fs.readFileSync (path.join (__dirname, "..", "fixtures", "opml", "sample-readinglist.opml"), "utf8");
+	const response = await runRequest(handler, {
+		method: "POST",
+		lowerpath: "/opmlsubscribe",
+		params: {
+			emailaddress: "alice@example.com",
+			emailcode: "secret"
+		},
+		postBody: opmlText
+	});
+	assert.equal(response.statusCode, 200);
+	assert.equal(opmlCalls.length, 1);
+	const call = opmlCalls[0];
+	assert.equal(call.screenname, "alice");
+	assert.equal(call.list.length, 2);
+	assert.equal(call.flDeleteEnabled, false);
 	const parsed = JSON.parse(response.body);
 	assert.equal(parsed.length, 2);
 });

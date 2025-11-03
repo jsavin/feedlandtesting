@@ -13,6 +13,7 @@ This invokes Node’s built-in `node:test` runner. Tests rely on the real Dave-o
 ## Fixtures
 
 - `tests/fixtures/feeds/` contains minimal RSS 2.0, Atom 1.0, and RSS 1.0 (RDF) samples that mirror the formats supported by Dave’s `reallysimple` reader. `tests/feeds/formatParsing.test.js` ensures the parser stack can ingest each format without hitting the network.
+- `tests/fixtures/opml/` hosts sample reading lists consumed by OPML-related tests (for example POST `/opmlsubscribe` and reading list reconciliation).
 
 ## Smoke & bench scripts
 

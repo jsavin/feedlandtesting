@@ -34,6 +34,22 @@ Follow-up:
 - [ ] Consider capturing dependency versions in the run log so we can diff when upstream publishes updates.
 - [ ] Evaluate adding a flag to skip reinstalling packages when iterating locally and speed outweighs freshness.
 
+#### 11/02/25; 06:05:00 PM by Codex -- Reading list sync coverage & feed fixtures
+
+Context:
+- Topic / subsystem: reading list synchronization, OPML import route, feed fixtures
+- Related files: tests/http/httpHandlers.test.js, tests/database/readingListSync.test.js, tests/fixtures/opml/sample-readinglist.opml, tests/feeds/formatParsing.test.js
+
+Highlights:
+- Added POST `/opmlsubscribe` coverage exercising the inline OPML parser and verifying that `processSubscriptionList` receives the parsed nodes.
+- Backfilled a regression guard for `checkSubsForOneUserAndOneReadingList` by replaying SQL responses and stubbing the remote outline fetch; we confirm only missing feeds are inserted when overlapping reading lists exist.
+- Enriched RSS fixtures with iTunes elements (duration, subtitle, summary) so podcast-style feeds are represented in parsing smoke tests.
+- `scripts/run-tests.sh` now prints `npm ls --depth=0` each run, giving us a dependency snapshot without leaving artifacts on disk. Treat the output as informational unless successive runs on the same host show meaningful drift.
+
+Follow-up:
+- [ ] Validate `scripts/smoke.sh` against a live instance and capture instructions in the release checklist.
+- [ ] Record a performance baseline in `notes/codeReviews/perfBaselines.md`, noting that comparisons are only meaningful when runs share the same host and data set.
+
 #### 11/02/25; 05:25:00 PM by Codex -- Subscription coverage and feed fixtures
 
 Context:
