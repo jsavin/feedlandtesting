@@ -140,3 +140,88 @@ function stubSqlEncoding () {
 			reallysimple.readFeed = originalReadFeed;
 			}
 		});
+
+test ("deleteReadingListSubscription only removes rows for selected list", async () => {
+	const originalRunSqltext = davesql.runSqltext;
+	const restoreEncoding = stubSqlEncoding ();
+	const queries = [];
+
+	davesql.runSqltext = (sql, callback) => {
+		queries.push (sql);
+		callback (undefined, []);
+		};
+
+	try {
+		await new Promise ((resolve, reject) => {
+			database.deleteReadingListSubscription ("alice", "http://example.com/listA.opml", (err) => {
+				if (err) {
+					reject (err);
+					}
+				else {
+					resolve ();
+					}
+				});
+			});
+
+		assert.equal (queries.length, 2);
+		assert.ok (queries [0].startsWith ("delete from readinglistsubscriptions"), "should delete top-level list subscription first");
+		assert.ok (queries [1].startsWith ("delete from subscriptions"), "should remove derived feed subscriptions");
+		assert.ok (queries [1].includes ("urlReadingList"), "should scope deletion to the originating reading list");
+		}
+	finally {
+		davesql.runSqltext = originalRunSqltext;
+		restoreEncoding ();
+		}
+	});
+
+test ("isUserSubscribed differentiates reading list memberships", async () => {
+	const originalRunSqltext = davesql.runSqltext;
+	const restoreEncoding = stubSqlEncoding ();
+	const queries = [];
+
+	davesql.runSqltext = (sql, callback) => {
+		queries.push (sql);
+		if (sql.includes ("urlReadingList") && sql.includes ("listA.opml")) {
+			callback (undefined, [{
+				listName: "alice",
+				feedUrl: "http://example.com/feed.xml",
+				categories: ",all,",
+				urlReadingList: "http://example.com/listA.opml"
+				}]);
+			return;
+			}
+		callback (undefined, []);
+		};
+
+	try {
+		const first = await new Promise ((resolve, reject) => {
+			database.isUserSubscribed ("http://example.com/feed.xml", "alice", "http://example.com/listA.opml", (err, data) => {
+				if (err) {
+					reject (err);
+					}
+				else {
+					resolve (data);
+					}
+				});
+			});
+		assert.equal (first.flSubscribed, true);
+		assert.equal (first.theSubscription.urlReadingList, "http://example.com/listA.opml");
+
+		const second = await new Promise ((resolve, reject) => {
+			database.isUserSubscribed ("http://example.com/feed.xml", "alice", "http://example.com/listB.opml", (err, data) => {
+				if (err) {
+					reject (err);
+					}
+				else {
+					resolve (data);
+					}
+				});
+			});
+		assert.equal (second.flSubscribed, false);
+		assert.ok (queries.some ((sql) => sql.includes ("urlReadingList")), "queries should include reading list clause when provided");
+		}
+	finally {
+		davesql.runSqltext = originalRunSqltext;
+		restoreEncoding ();
+		}
+	});

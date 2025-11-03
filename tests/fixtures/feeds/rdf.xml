@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns="http://purl.org/rss/1.0/"
+>
+	<channel rdf:about="http://example.net/">
+		<title>Sample RSS 1.0</title>
+		<link>http://example.net/</link>
+		<description>Example RSS 1.0 (RDF) feed used for tests.</description>
+		<items>
+			<rdf:Seq>
+				<rdf:li rdf:resource="http://example.net/posts/1"/>
+			</rdf:Seq>
+		</items>
+	</channel>
+
+	<item rdf:about="http://example.net/posts/1">
+		<title>RDF Item</title>
+		<link>http://example.net/posts/1</link>
+		<description>First RDF item.</description>
+	</item>
+</rdf:RDF>

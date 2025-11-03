@@ -61,3 +61,17 @@ Templating & XSS Notes
 - Feed item descriptions are currently sanitized to allow only `<p>` and `<br>` tags; titles remain raw strings and must be escaped by consuming clients.
 - News product prefs bypass sanitization entirely today—this is the highest-priority XSS vector.
 - Longer term, adopt a configurable allowlist so trusted environments can opt-in to additional tags while keeping defaults tight.
+
+#### 11/02/25; 04:55:00 PM by Codex -- npm audit warnings from fresh installs
+
+Context
+- Topic / subsystem: dependency health surfaced during `scripts/run-tests.sh`
+- Related files: package.json, scripts/run-tests.sh
+
+Findings
+- Each fresh install pulls the latest upstream packages but `npm install` reports 18 vulnerabilities (11 moderate, 5 high, 2 critical) inherited from Dave-owned dependencies such as `request@2.88.2`, `core-js@2.6.12`, `uuid@3.4.0`, and `har-validator@5.1.5`.
+- These vulnerabilities originate in upstream packages (`daveappserver`, `feedlanddatabase`, etc.) and cannot be addressed locally without breaking parity with the canonical environment.
+
+Actions / Follow-up
+- [ ] File an upstream issue outlining the vulnerable transitive deps, noting that every clean install surfaces them and referencing `npm audit` output.
+- [ ] Track remediation progress; once upstream publishes patched versions, update the harness to verify the warnings disappear.

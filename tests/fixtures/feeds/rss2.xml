@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+	<channel>
+		<title>Sample RSS 2.0</title>
+		<link>http://example.com/</link>
+		<description>Example RSS 2.0 feed used for tests.</description>
+		<language>en-us</language>
+		<item>
+			<title>First Item</title>
+			<link>http://example.com/posts/1</link>
+			<guid isPermaLink="true">http://example.com/posts/1</guid>
+			<pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+			<description>One</description>
+		</item>
+	</channel>
+</rss>

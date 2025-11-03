@@ -49,3 +49,30 @@ Tracking & Ownership
 - [x] Add HTTP integration tests with temporary DB. (Owner JES)
 - [ ] Document smoke test script and include in release checklist. (Owner JES)
 - [ ] Capture performance baseline (optional). (Owner JES)
+
+#### 11/02/25; 05:05:00 PM by Codex -- Follow-up test ideas with real dependencies
+
+Now that `scripts/run-tests.sh` installs Dave-owned packages on the fly, we can expand coverage without relying on the old shim harness. Candidate additions:
+
+1. **Subscription lifecycle**  
+   - Exercise `/subscribe`, `/unsubscribe`, and `/unsublist` via the HTTP handler, confirming that `feedlanddatabase` writes expected SQL and updates categories correctly.
+2. **Authenticated category management**  
+   - Add tests for `/setsubscriptioncategories` and verifying that category strings are normalized (comma-wrapped) when saved.
+3. **River generation paths**  
+   - Cover an OPML-driven river endpoint (`/getriverfromlist` or `/getriver`) with a small fixture list to ensure joins and limits hold with real database helpers.
+4. **Reading list reconciliation**  
+   - Simulate `/checkreadinglist` or `/subscribetoreadinglist`, stubbing only the external HTTP fetch but exercising the database diff logic.
+5. **Blog markdown/HTML handling**  
+   - With `marked` available, assert that `blog.writePost`/`getBlogPostText` produce both HTML and Markdown variants as upstream expects.
+6. **Failure propagation**  
+   - Inject SQL and network errors within `database.subscribeToFeed` and `feedland` HTTP handlers to ensure 500s bubble up cleanly without leaving resources altered.
+7. **Background tasks wiring**  
+   - Verify that `feedland.start` attaches `feedlanddatabase.updateNextFeedIfReady`, `checkNextReadingListfReady`, and `clearCachedRivers` when present, guarding against regressions when upstream toggles those helpers.
+
+Next pass: scope each idea, decide required fixtures/stubs, and prioritize based on upstream risk (subscription flows and auth-protected routes first). Track progress here as suites land.
+
+#### 11/02/25; 05:25:00 PM by Codex -- Progress on subscription coverage
+
+- Added HTTP handler tests for `/subscribe`, `/unsubscribe`, and `/unsublist`, verifying the routes resolve caller identity via `getUserRecFromEmail` and dispatch to the correct database helpers (`tests/http/httpHandlers.test.js`).
+- Extended database unit tests to cover `deleteReadingListSubscription` and `isUserSubscribed`, ensuring list-specific subscriptions are reference-counted via `urlReadingList` (`tests/database/subscribeToFeed.test.js`).
+- Introduced fixture feeds (RSS 2.0, Atom 1.0, RSS 1.0) plus parsing tests so we have local artifacts for every format supported by `reallysimple` (`tests/fixtures/feeds/`, `tests/feeds/formatParsing.test.js`).

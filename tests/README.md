@@ -10,6 +10,10 @@ npm test
 
 This invokes Node’s built-in `node:test` runner. Tests rely on the real Dave-owned packages under `node_modules`; individual suites override only the side-effectful bits (SQL queries, network calls) so the assertions stay focused on FeedLand behavior.
 
+## Fixtures
+
+- `tests/fixtures/feeds/` contains minimal RSS 2.0, Atom 1.0, and RSS 1.0 (RDF) samples that mirror the formats supported by Dave’s `reallysimple` reader. `tests/feeds/formatParsing.test.js` ensures the parser stack can ingest each format without hitting the network.
+
 ## Smoke & bench scripts
 
 - `scripts/smoke.sh` — curl-based checks to run against a live instance. Set `FEEDLAND_HOST`, and optionally `FEEDLAND_EMAIL` / `FEEDLAND_CODE` for authenticated calls.
